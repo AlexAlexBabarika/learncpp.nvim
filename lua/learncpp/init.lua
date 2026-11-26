@@ -105,6 +105,16 @@ function M.prev()
   reader.step(-1)
 end
 
+--- Compile and run the code block under the cursor (or the scratch file being edited).
+function M.run()
+  require("learncpp.run").run()
+end
+
+--- Open the code block under the cursor as a scratch file.
+function M.edit()
+  require("learncpp.run").edit()
+end
+
 --- Download all lessons again and refresh the cache.
 function M.sync()
   util.notify("Downloading lessons from learncpp.com...")

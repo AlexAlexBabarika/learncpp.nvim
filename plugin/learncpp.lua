@@ -11,6 +11,8 @@ local SUBCOMMANDS = {
   resume = function() require("learncpp").resume() end,
   next = function() require("learncpp").next() end,
   prev = function() require("learncpp").prev() end,
+  run = function() require("learncpp").run() end,
+  edit = function() require("learncpp").edit() end,
   sync = function() require("learncpp").sync() end,
 }
 

@@ -1,4 +1,5 @@
 local config = require("learncpp.config")
+local run = require("learncpp.run")
 local store = require("learncpp.store")
 local style = require("learncpp.style")
 local util = require("learncpp.util")
@@ -7,9 +8,13 @@ local M = {}
 
 local bufs = {}
 local link_ns = vim.api.nvim_create_namespace("learncpp_links")
+local hint_ns = vim.api.nvim_create_namespace("learncpp_hints")
 local targets = {} -- buffer -> link extmark id -> url
+local HINT_END = 72 -- window column the key hints end at; code boxes are at least this wide
 
 vim.api.nvim_set_hl(0, "LearncppLink", { link = "Underlined", default = true })
+vim.api.nvim_set_hl(0, "LearncppKey", { link = "Special", default = true })
+vim.api.nvim_set_hl(0, "LearncppKeyLabel", { link = "Comment", default = true })
 
 -- Markdown links in `line`, skipping anything inside a code span (a lambda looks like a link).
 local function links_in(line)
@@ -170,6 +175,20 @@ local function content(slug)
   return lines
 end
 
+-- The keys that act on a code block, shown on its opening line: "r run  o edit".
+local function key_hint(block)
+  local keys, chunks, width = config.options.keys, {}, 0
+  local action = run.has_main(table.concat(block.code, "\n")) and "run" or "check"
+  for _, item in ipairs({ { keys.run, action }, { keys.edit, "edit" } }) do
+    if item[1] then
+      local key, label = " " .. item[1] .. " ", item[2] .. " "
+      vim.list_extend(chunks, { { key, "LearncppKey" }, { label, "LearncppKeyLabel" } })
+      width = width + vim.fn.strdisplaywidth(key .. label)
+    end
+  end
+  return chunks, width
+end
+
 local function fill(buf, slug, lines)
   local links = M.plain_links(lines)
   vim.bo[buf].modifiable = true
@@ -180,6 +199,15 @@ local function fill(buf, slug, lines)
   for _, link in ipairs(links) do
     local mark = { end_col = link.end_col, hl_group = "LearncppLink", priority = 150 }
     targets[buf][vim.api.nvim_buf_set_extmark(buf, link_ns, link.row - 1, link.col, mark)] = link.url
+  end
+  vim.api.nvim_buf_clear_namespace(buf, hint_ns, 0, -1)
+  for _, block in ipairs(config.options.hints and run.blocks(lines) or {}) do
+    local chunks, width = key_hint(block)
+    if block.lang == "cpp" and width > 0 then
+      -- above render-markdown's header row, which is drawn at the default priority
+      local mark = { virt_text = chunks, virt_text_win_col = HINT_END - width, priority = 5000 }
+      vim.api.nvim_buf_set_extmark(buf, hint_ns, block.first - 1, 0, mark)
+    end
   end
   if config.options.style then
     style.decorate(buf, lines, store.index().by_slug[slug].spoilers)
@@ -223,6 +251,8 @@ local function start(buf, slug)
   map(keys.follow, M.follow, "Follow link or toggle solution")
   map(keys.next, function() M.step(1) end, "Next lesson")
   map(keys.prev, function() M.step(-1) end, "Previous lesson")
+  map(keys.run, run.run, "Run this code block")
+  map(keys.edit, run.edit, "Edit this code block in a scratch file")
 
   setup_win(vim.api.nvim_get_current_win(), buf, slug)
   vim.api.nvim_create_autocmd("BufWinEnter", {

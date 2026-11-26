@@ -31,7 +31,16 @@ Sleep 3s
 Enter
 Sleep 2.5s
 Type "66Gzt"
-Sleep 4s
+Sleep 3s
+
+# Run the code block under the cursor
+Type "6j"
+Sleep 600ms
+Type "r"
+Sleep 3.5s
+Hide
+Type ":only" Enter
+Show
 
 # Browse the table of contents, open a quiz and reveal a solution
 Type ":LearnCpp"

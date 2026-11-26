@@ -93,7 +93,10 @@ function M.highlights()
   end
   box("Quote", muted)
   box("Solution", color("Special", "fg") or fg)
-  vim.api.nvim_set_hl(0, "LearncppCode", { bg = blend(fg, bg, 0.08) })
+  local code = blend(fg, bg, 0.08)
+  vim.api.nvim_set_hl(0, "LearncppCode", { bg = code })
+  vim.api.nvim_set_hl(0, "LearncppKey", { fg = color("Special", "fg") or fg, bg = code, bold = true })
+  vim.api.nvim_set_hl(0, "LearncppKeyLabel", { fg = muted, bg = code })
   vim.api.nvim_set_hl(0, "LearncppHint", { fg = muted, italic = true })
   vim.api.nvim_set_hl(0, "LearncppLink", { fg = color("Function", "fg"), underline = true })
 end

@@ -10,10 +10,12 @@ operator in your code to the lessons that explain it.
 - **Search** the full text of every lesson, offline.
 - **Read** lessons as rendered Markdown: boxed code with C++ highlighting, coloured callouts, tables, links to other
   lessons that open in Neovim, and quiz solutions that stay folded until you ask for them.
+- **Run** a lesson's code block with one key, or open it as a scratch file to change it and run it again.
 
 ## Requirements
 
 - Neovim 0.10 or newer (developed on 0.12) and `curl`
+- A C++ compiler (`clang++` or `g++`) and `sh`, only for running code blocks
 - Tree-sitter parsers for `markdown`, `markdown_inline` and `cpp`
 - Optional: [snacks.nvim](https://github.com/folke/snacks.nvim) for the picker (falls back to `vim.ui.select`),
   [render-markdown.nvim](https://github.com/MeanderingProgrammer/render-markdown.nvim) and a Nerd Font for the boxed
@@ -47,6 +49,8 @@ The first command downloads the lessons (a few seconds) and caches them; everyth
 | `:LearnCpp open <ref>`     | Open by number (`25.7`), URL, slug or part of the title                 |
 | `:LearnCpp resume`         | Reopen the lesson you read last                                         |
 | `:LearnCpp next` / `prev`  | Neighbouring lesson                                                     |
+| `:LearnCpp run`            | Compile and run the code block at the cursor (or the scratch file)      |
+| `:LearnCpp edit`           | Open the code block at the cursor as a scratch file                     |
 | `:LearnCpp sync`           | Download the lessons again                                              |
 
 Inside a lesson:
@@ -55,6 +59,23 @@ Inside a lesson:
 | ----------- | --------------------------------------------------------------------------------- |
 | `<CR>`      | Follow the link under the cursor, or reveal / hide a solution, hint or task list  |
 | `]l` / `[l` | Next / previous lesson                                                            |
+| `r`         | Compile and run the code block under the cursor                                   |
+| `o`         | Open that block as a scratch `.cpp` file; `<CR>` in the scratch file runs it      |
+
+## Running code
+
+Every C++ block shows its keys in the header: `r run  o edit`, or `r check` when the block has no `main()`.
+
+`r` on a code block compiles it and runs the program in a terminal split, so programs that read `std::cin` work
+and `Ctrl-C` stops one that loops. Compiler errors show up in the same split; quite a few lessons demonstrate an
+error on purpose. `q` closes the split.
+
+About half of the site's code blocks are complete programs that run as they are. A block without `main()` is only
+checked for errors, and a block that depends on an earlier block or on another file of a multi-file example will
+not compile on its own; `o` gives you a copy to complete.
+
+The program runs in a temporary directory that is deleted when Neovim exits. On macOS it is also sandboxed with
+`sandbox-exec`: no network access and no writes outside that directory. On other systems it runs unsandboxed.
 
 ## Configuration
 
@@ -80,7 +101,21 @@ require("learncpp").setup({
     statuscolumn = "",
     foldcolumn = "0",
   },
-  keys = { follow = "<CR>", next = "]l", prev = "[l" }, -- set one to false to leave it unmapped
+  hints = true, -- show the run and edit keys in the header of each C++ code block
+  run = {
+    compiler = nil, -- defaults to $CXX, then the first of clang++, g++, c++
+    flags = { "-std=c++23" },
+    sandbox = true, -- macOS: the program gets no network and cannot write outside its temporary directory
+    height = 12, -- of the output window
+  },
+  keys = { -- buffer-local; set one to false to leave it unmapped
+    follow = "<CR>",
+    next = "]l",
+    prev = "[l",
+    run = "r",
+    edit = "o",
+    scratch_run = "<CR>", -- in the scratch file
+  },
 })
 ```
 
@@ -107,6 +142,7 @@ nvim --headless -u NONE -l tests/html.lua
 nvim --headless -u NONE -l tests/store.lua
 nvim --headless -u NONE -l tests/search.lua
 nvim --headless -u NONE -l tests/reader.lua
+nvim --headless -u NONE -l tests/run.lua
 ```
 
 The showcase is recorded with [VHS](https://github.com/charmbracelet/vhs): `vhs demo/demo.tape`.

@@ -9,6 +9,7 @@ buffers. No build step and no dependencies; snacks.nvim's picker is used when pr
 - `lua/learncpp/store.lua` - sync over the WordPress REST API, table of contents and site index parsing, cache files
 - `lua/learncpp/search.lua` - symbol under cursor, symbol -> lessons lookup, full-text search
 - `lua/learncpp/reader.lua` - lesson buffers: folded solutions, link following, next/previous
+- `lua/learncpp/run.lua` - code block under the cursor, compile-and-run in a terminal split, scratch files, sandbox
 - `lua/learncpp/style.lua` - look of lesson buffers: per-buffer render-markdown.nvim options, box highlights
 - `lua/learncpp/picker.lua`, `init.lua`, `plugin/learncpp.lua` - picker, public API, `:LearnCpp`
 
@@ -21,7 +22,10 @@ nvim --headless -u NONE -l tests/html.lua
 nvim --headless -u NONE -l tests/store.lua
 nvim --headless -u NONE -l tests/search.lua
 nvim --headless -u NONE -l tests/reader.lua
+nvim --headless -u NONE -l tests/run.lua
 ```
+
+`tests/run.lua` also compiles and runs one program for real when a C++ compiler is on PATH.
 
 The look is checked by eye, or by attaching to `nvim --embed` as a UI and reading back cell backgrounds; headless
 `screenstring()` output does not show colours.
